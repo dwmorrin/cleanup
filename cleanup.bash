@@ -22,6 +22,7 @@
 
 # set defaults
 progname=$(basename "$0")
+system=$(uname)
 cleanupDirName="Cleanup"
 cleanupParent="$HOME/Desktop"
 today=$(date '+%m-%d-%y')
@@ -130,14 +131,20 @@ fi
 cleanUp() {
     directory="$1"
     # build string of things to exclude from remaining arguments
-    exclude=(-flags uchg -or -name '.*' -or -name "$cleanupDirName")
+    exclude=(-name "$cleanupDirName")
+    if [[ $system = "Darwin" ]]; then
+        exclude+=(-or -flags uchg)
+        depth=(-d 1)
+    else
+        depth=(-maxdepth 1 -mindepth 1)
+    fi
     shift
     for arg do
         exclude+=(-or -name "$arg")
     done
 
     if $verbose; then
-        echo "Moving files into Desktop Cleanup from $directory"
+        echo "Moving files into $cleanupDirName from $directory"
         echo "(Please be patient - this can take awhile!)"
     fi
 
@@ -145,9 +152,9 @@ cleanUp() {
         fatalMsg "$HOME/$directory does not exist"
     fi
 
-    find "$HOME/$directory" \! \( "${exclude[@]}" \) -d 1 -print0 \
-    | xargs -0 -n1 -I {} \
-    mv {} "$cleanupParent/$cleanupDirName/$today"
+    find "$HOME/$directory" \! \( "${exclude[@]}" \) "${depth[@]}" -print0 \
+    | xargs -0 -I {} \
+    mv "{}" "$cleanupParent/$cleanupDirName/$today"
 }
 
 # Deletes old Desktop Cleanup/date directories
