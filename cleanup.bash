@@ -24,9 +24,9 @@
 progname=$(basename "$0")
 cleanupDirName="Cleanup"
 cleanupParent="$HOME/Desktop"
-daysUntilDelete=7
 today=$(date '+%m-%d-%y')
 dailyDir="$cleanupParent/$cleanupDirName/$today"
+daysUntilDelete=7
 tries=0
 emptyDownloads=false;
 emptyTrash=false
@@ -50,11 +50,13 @@ while getopts c:d:eD:glm:ost:v option; do
         t) daysUntilDelete="$OPTARG";;
         v) verbose=true;;
        \?) cat <<EOF
-Usage: $progname [-c path][-t days][-d UUID][-D name][-m email][-v]
+Usage: $progname [-eglosv][-c path][-t days][-d UUID][-D name][-m email]
   -c Path to the cleanup directory (defaults to current users Desktop)
   -d External hard drive UUID (only if -c points to external device)
   -D Name of the external hard drive (only if -c points to external device)
+  -e empty Trash
   -g GUI mode; gives user a chance to cancel and progress updates
+  -l delete everything in Downloads
   -m email address for error reporting
   -o run only once per day
   -s set desktop sorting to "by kind"
@@ -126,6 +128,7 @@ fi
 # cleanUp path [exclude...]
 # Moves everything but locked and hidden items from $HOME/path
 cleanUp() {
+    set -x
     directory="$1"
     # build string of things to exclude from remaining arguments
     exclude=(-flags uchg -or -name '.*' -or -name "$cleanupDirName")
@@ -143,9 +146,7 @@ cleanUp() {
         fatalMsg "$HOME/$directory does not exist"
     fi
 
-    # $exclude has to be left unquoted for word splitting and globbing
-    # shellcheck disable=SC2068
-    find "$HOME/$directory" \! \( ${exclude[@]} \) -d 1 -print0 \
+    find "$HOME/$directory" \! \( "${exclude[@]}" \) -d 1 -print0 \
     | xargs -0 -n1 -I {} \
     mv {} "$cleanupParent/$cleanupDirName/$today"
 }
