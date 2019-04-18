@@ -128,7 +128,6 @@ fi
 # cleanUp path [exclude...]
 # Moves everything but locked and hidden items from $HOME/path
 cleanUp() {
-    set -x
     directory="$1"
     # build string of things to exclude from remaining arguments
     exclude=(-flags uchg -or -name '.*' -or -name "$cleanupDirName")
