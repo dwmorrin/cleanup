@@ -20,22 +20,26 @@
 #   david morrin <dwmorrin@gmail.com>
 #   github.com/dwmorrin
 
-# set defaults
-progname=$(basename "$0")
-system=$(uname)
+# set defaults - adjust to taste
 cleanupDirName="Cleanup"
 cleanupParent="$HOME/Desktop"
-today=$(date '+%m-%d-%y')
 daysUntilDelete=7
+
+# initialize other variables
+progname=$(basename "$0")
+system=$(uname)
+today=$(date '+%m-%d-%y')
 tries=0
 emptyDownloads=false;
 emptyTrash=false
 guiMode=false
 onlyOnce=false
+nouchg=true # on MacOS: ignore locked files (uchg flag)
 sortDesktop=false
 verbose=false
+depth=(-maxdepth 1 -mindepth 1) # trying to keep these options portable
 
-while getopts c:d:eD:glm:n:ost:v option; do
+while getopts c:d:eD:glm:n:ost:uv option; do
     case "$option"
     in
         c) cleanupParent="$OPTARG";;
@@ -49,27 +53,34 @@ while getopts c:d:eD:glm:n:ost:v option; do
         o) onlyOnce=true;;
         s) sortDesktop=true;;
         t) daysUntilDelete="$OPTARG";;
+        u) nouchg=false;;
         v) verbose=true;;
        \?) cat <<EOF
-Usage: $progname [-eglosv][-c path][-n name][-t days][-d UUID][-D name][-m email]
+Usage: $progname [-eglosv][-c path][-n name][-t days][-m email]
+                 [-d UUID][-D name]
   -c Path to the cleanup directory (defaults to current users Desktop)
-  -d External hard drive UUID (only if -c points to external device)
-  -D Name of the external hard drive (only if -c points to external device)
   -e empty Trash
-  -g GUI mode; gives user a chance to cancel and progress updates
   -l delete everything in Downloads
   -m email address for error reporting
   -n cleanup directory name
   -o run only once per day
-  -s set desktop sorting to "by kind"
   -t Time in days before cleanup files are purged (default: $daysUntilDelete)
-  -v verbode; will announce actions
+  -v verbose; will announce actions
+
+MacOS only:
+  -g GUI mode; gives user a chance to cancel and progress updates
+  -s set Desktop to "sort by kind"
+
+If the path specificed by -c points to an external drive:
+  -d External hard drive UUID
+  -D Name of the external hard drive
 EOF
             exit 1;;
     esac
 done
 shift $((OPTIND - 1))
 
+# today's desktop cleanup directory
 dailyDir="$cleanupParent/$cleanupDirName/$today"
 
 # fatalMsg [errorMsg]
@@ -100,7 +111,11 @@ if [[ -n "$externalDiskUUID" ]]; then
     done
 
     if diskutil info "$externalDiskUUID" &> /dev/null; then
-        currentDriveName=$(diskutil info "$externalDiskUUID" | grep "Volume Name" | cut -d':' -f2 | sed -e 's/^[[:space:]]*//')
+        currentDriveName=$(diskutil info "$externalDiskUUID" \
+            | grep "Volume Name" \
+            | cut -d':' -f2 \
+            | sed -e 's/^[[:space:]]*//'
+        )
     else
         msg="Bad UUID: check diskutil info -all and reset UUID "
         msg+="and check that drive is connected to Mac"
@@ -123,14 +138,12 @@ fi
 # cleanUp path [exclude...]
 # Moves everything but locked and hidden items from $HOME/path
 cleanUp() {
+    local directory
     directory="$1"
     # build string of things to exclude from remaining arguments
     exclude=(-name "$cleanupDirName")
-    if [[ $system = "Darwin" ]]; then
+    if [[ $system = "Darwin" ]] && $nouchg; then
         exclude+=(-or -flags uchg)
-        depth=(-d 1)
-    else
-        depth=(-maxdepth 1 -mindepth 1)
     fi
     shift
     for arg do
@@ -157,24 +170,25 @@ deleteOldCleanups() {
              "$daysUntilDelete days"
     fi
 
-    find "$cleanupParent/$cleanupDirName" \
-        -maxdepth 1 -mtime +"$daysUntilDelete" -print0 \
-        | xargs -0 -n1 -I {} \
-        rm -R {}
+    find "$cleanupParent/$cleanupDirName" "${depth[@]}" \
+        -mtime +"$daysUntilDelete" -print0 \
+        | xargs -0 -I {} rm -R {}
 }
 
 # deleteContentsOf [directory]
 # Deletes $HOME/[directory] contents
 deleteContentsOf() {
+    local directory
+    directory="$1"
     if $verbose; then
-        echo "Deleting contents of $1"
+        echo "Deleting contents of $directory"
     fi
 
-    if [[ ! -d "$1" ]]; then
-        fatalMsg "$1 is not a directory"
+    if [[ ! -d $directory ]]; then
+        fatalMsg "$directory is not a directory"
     fi
 
-    if [[ "$(find "$1" \! -name ".*" -d 1)" ]]; then
+    if [[ "$(find "$directory" "${depth[@]}" \! -name ".*")" ]]; then
       rm -r "${1:?}/"*
     fi
 }
