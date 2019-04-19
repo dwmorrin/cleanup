@@ -39,9 +39,10 @@ sortDesktop=false
 verbose=false
 depth=(-maxdepth 1 -mindepth 1) # trying to keep these options portable
 
-while getopts c:d:eD:glm:n:ost:uv option; do
+while getopts bc:d:eD:glm:n:ost:uv option; do
     case "$option"
     in
+        b) set -x;;
         c) cleanupParent="$OPTARG";;
         d) externalDiskUUID="$OPTARG";;
         D) correctDriveName="$OPTARG";;
@@ -196,8 +197,8 @@ deleteContentsOf() {
 sortDesktopByKind() {
   local applescript
   read -r -d '' applescript <<EOF
-tell application "Finder" to tell window of desktop to
-tell its icon view options to
+tell application "Finder" to tell window of desktop to \
+tell its icon view options to \
 set arrangement to arranged by kind
 EOF
   osascript -e "$applescript"
@@ -216,11 +217,11 @@ fi
 
 # Give the user a chance to cancel
 if $guiMode && [[ $system = "Darwin" ]]; then
-    read -r -d '' applescript <<\EOF
-display alert "Cleanup is about to start.
-You should not use the computer while it is running
-and it may take a few minutes to run.
-Please hit cancel now to use the computer immediately."
+    read -r -d '' applescript <<EOF
+display alert "Cleanup is about to start. \
+You should not use the computer while it is running \
+and it may take a few minutes to run. \
+Please hit cancel now to use the computer immediately." \
 buttons {"Cleanup", "Cancel"} giving up after 30
 EOF
     response=$(osascript -e "$applescript")
