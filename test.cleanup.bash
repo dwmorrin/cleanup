@@ -3,8 +3,7 @@ if [[ $1 = debug ]]; then
     set -ex
 fi
 root="Test-$$"
-mkdir -p "$root/target"
-mkdir "$root/Cleanup"
+mkdir -p "$root"/{Cleanup,target}
 touch "$root/target/testfile"
 echo ------BEFORE CLEANUP------
 ls -R "$root"
