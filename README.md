@@ -20,8 +20,8 @@ with a launchd .plist (or crontab on linux) and setup to run as a user agent fro
 limits the script to running once per day.
 
 ```
-Usage: cleanup [-eglosv][-c path][-n name][-t days][-m email]
-                 [-d UUID][-D name] dir...
+Usage: cleanup [-eglosuv][-c path][-n name][-t days][-m email]
+               [-d UUID][-D name] dir...
   -c Path to the cleanup directory (defaults to current users Desktop)
   -e empty Trash
   -l delete everything in Downloads
@@ -36,6 +36,7 @@ dir... - directories to purge files from and move into a cleanup directory
 MacOS only:
   -g GUI mode; gives user a chance to cancel and progress updates
   -s set Desktop to "sort by kind"
+  -u clean up locked files (cleanup ignores locked files by default)
 
 If the path specificed by -c points to an external drive:
   -d External hard drive UUID

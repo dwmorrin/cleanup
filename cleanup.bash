@@ -57,7 +57,7 @@ while getopts bc:d:eD:glm:n:ost:uv option; do
         u) nouchg=false;;
         v) verbose=true;;
        \?) cat <<EOF
-Usage: $progname [-eglosv][-c path][-n name][-t days][-m email]
+Usage: $progname [-eglosuv][-c path][-n name][-t days][-m email]
                  [-d UUID][-D name] dir...
   -c Path to the cleanup directory (defaults to current users Desktop)
   -e empty Trash
@@ -73,6 +73,7 @@ dir... - directories to purge files from and move into a cleanup directory
 MacOS only:
   -g GUI mode; gives user a chance to cancel and progress updates
   -s set Desktop to "sort by kind"
+  -u clean up locked files ($progname ignores locked files by default)
 
 If the path specificed by -c points to an external drive:
   -d External hard drive UUID
