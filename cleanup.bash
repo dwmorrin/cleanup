@@ -58,7 +58,7 @@ while getopts bc:d:eD:glm:n:ost:uv option; do
         v) verbose=true;;
        \?) cat <<EOF
 Usage: $progname [-eglosv][-c path][-n name][-t days][-m email]
-                 [-d UUID][-D name]
+                 [-d UUID][-D name] dir...
   -c Path to the cleanup directory (defaults to current users Desktop)
   -e empty Trash
   -l delete everything in Downloads
@@ -67,6 +67,8 @@ Usage: $progname [-eglosv][-c path][-n name][-t days][-m email]
   -o run only once per day
   -t Time in days before cleanup files are purged (default: $daysUntilDelete)
   -v verbose; will announce actions
+
+dir... - directories to purge files from and move into a cleanup directory
 
 MacOS only:
   -g GUI mode; gives user a chance to cancel and progress updates
