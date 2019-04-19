@@ -11,13 +11,13 @@ done
 
 root="Test-$$"
 mkdir -p "$root"/{Cleanup,target}
-touch "$root/target/testfile"
+touch "$root/target/"{.leavealone,testfile{1..10}}
 echo ------BEFORE CLEANUP------
-ls -R "$root"
+ls -AR "$root"
 
 bash cleanup.bash "${args[@]}" -c "$root" "$root/target"
 
 echo ------AFTER CLEANUP-------
-ls -R "$root"
+ls -AR "$root"
 
 rm -R "$root"

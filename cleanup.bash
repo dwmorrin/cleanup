@@ -145,7 +145,7 @@ cleanUp() {
     local directory
     directory="$1"
     # build string of things to exclude from remaining arguments
-    exclude=(-name "$cleanupDirName")
+    exclude=(-name "$cleanupDirName" -or -name ".*")
     if [[ $system = "Darwin" ]] && $nouchg; then
         exclude+=(-or -flags uchg)
     fi
