@@ -26,7 +26,6 @@ system=$(uname)
 cleanupDirName="Cleanup"
 cleanupParent="$HOME/Desktop"
 today=$(date '+%m-%d-%y')
-dailyDir="$cleanupParent/$cleanupDirName/$today"
 daysUntilDelete=7
 tries=0
 emptyDownloads=false;
@@ -36,7 +35,7 @@ onlyOnce=false
 sortDesktop=false
 verbose=false
 
-while getopts c:d:eD:glm:ost:v option; do
+while getopts c:d:eD:glm:n:ost:v option; do
     case "$option"
     in
         c) cleanupParent="$OPTARG";;
@@ -46,12 +45,13 @@ while getopts c:d:eD:glm:ost:v option; do
         g) guiMode=true;;
         l) emptyDownloads=true;;
         m) mailto="$OPTARG";;
+        n) cleanupDirName="$OPTARG";;
         o) onlyOnce=true;;
         s) sortDesktop=true;;
         t) daysUntilDelete="$OPTARG";;
         v) verbose=true;;
        \?) cat <<EOF
-Usage: $progname [-eglosv][-c path][-t days][-d UUID][-D name][-m email]
+Usage: $progname [-eglosv][-c path][-n name][-t days][-d UUID][-D name][-m email]
   -c Path to the cleanup directory (defaults to current users Desktop)
   -d External hard drive UUID (only if -c points to external device)
   -D Name of the external hard drive (only if -c points to external device)
@@ -59,6 +59,7 @@ Usage: $progname [-eglosv][-c path][-t days][-d UUID][-D name][-m email]
   -g GUI mode; gives user a chance to cancel and progress updates
   -l delete everything in Downloads
   -m email address for error reporting
+  -n cleanup directory name
   -o run only once per day
   -s set desktop sorting to "by kind"
   -t Time in days before cleanup files are purged (default: $daysUntilDelete)
@@ -68,6 +69,8 @@ EOF
     esac
 done
 shift $((OPTIND - 1))
+
+dailyDir="$cleanupParent/$cleanupDirName/$today"
 
 # fatalMsg [errorMsg]
 fatalMsg() {
@@ -110,17 +113,8 @@ if [[ -n "$externalDiskUUID" ]]; then
     fi
 fi
 
-# path error guards
-if [[ -z "$cleanupParent" ]]; then
-    fatalMsg "Init err: Cleanup directory not set"
-fi
-
 if [[ ! -d "$cleanupParent"  ]]; then
     fatalMsg "$cleanupParent is not a directory"
-fi
-
-if [[ ! -d "$HOME" ]]; then
-    fatalMsg "$HOME is not a valid directory"
 fi
 
 # FUNCTIONS
@@ -148,13 +142,12 @@ cleanUp() {
         echo "(Please be patient - this can take awhile!)"
     fi
 
-    if [[ ! -d "$HOME/$directory" ]]; then
-        fatalMsg "$HOME/$directory does not exist"
+    if [[ ! -d "$directory" ]]; then
+        fatalMsg "$directory is not a directory"
     fi
 
-    find "$HOME/$directory" \! \( "${exclude[@]}" \) "${depth[@]}" -print0 \
-    | xargs -0 -I {} \
-    mv "{}" "$cleanupParent/$cleanupDirName/$today"
+    find "$directory" "${depth[@]}" \! \( "${exclude[@]}" \) -print0 \
+    | xargs -0 -I {} mv "{}" "$dailyDir/"
 }
 
 # Deletes old Desktop Cleanup/date directories
@@ -174,15 +167,15 @@ deleteOldCleanups() {
 # Deletes $HOME/[directory] contents
 deleteContentsOf() {
     if $verbose; then
-        echo "Deleting ~/$1 contents"
+        echo "Deleting contents of $1"
     fi
 
-    if [[ ! -d "$HOME/$1" ]]; then
-        fatalMsg "$HOME/$1 does not exist"
+    if [[ ! -d "$1" ]]; then
+        fatalMsg "$1 is not a directory"
     fi
 
-    if [[ "$(find "$HOME/$1" \! -name ".*" -d 1)" ]]; then
-      rm -r "$HOME/${1:?}/"*
+    if [[ "$(find "$1" \! -name ".*" -d 1)" ]]; then
+      rm -r "${1:?}/"*
     fi
 }
 
@@ -208,7 +201,7 @@ if $onlyOnce; then
 fi
 
 # Give the user a chance to cancel
-if $guiMode; then
+if $guiMode && [[ $system = "Darwin" ]]; then
     read -r -d '' applescript <<\EOF
 display alert "Cleanup is about to start.
 You should not use the computer while it is running
@@ -234,16 +227,16 @@ for dir do
 done
 #   TODO make use of the optional exclusion arguments to cleanUp
 #   on the command line, example for hardcoding here below
-# cleanUp "Documents/SomeDir" "*.jpg" # means don't touch jpgs
+# cleanUp "$HOME/Documents/SomeDir" "*.jpg" # means don't touch jpgs
 
 deleteOldCleanups
 if $emptyDownloads; then
-    deleteContentsOf "Downloads"
+    deleteContentsOf "$HOME/Downloads"
 fi
 if $emptyTrash; then
-    deleteContentsOf ".Trash"
+    deleteContentsOf "$HOME/.Trash"
 fi
-if $sortDesktop; then
+if $sortDesktop && [[ $system = "Darwin" ]]; then
     sortDesktopByKind
 fi
 
