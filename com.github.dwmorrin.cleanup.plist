@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.github.dwmorrin.cleanup</string>
+	<key>LimitLoadToSessionType</key>
+	<string>Aqua</string>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>ProgramArguments</key>
+	<array>
+        <string>/Users/username/bin/cleanup</string>
+		<string>-g</string>
+		<string>-o</string>
+	</array>
+	<key>StandardErrorPath</key>
+    <string>/Users/username/.cleanup.error</string>
+	<key>StandardOutPath</key>
+	<string>/Users/username/.cleanup.log</string>
+</dict>
+</plist>
