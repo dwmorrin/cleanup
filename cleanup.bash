@@ -114,7 +114,7 @@ if [[ -n "$externalDiskUUID" ]]; then
         sleep 15
     done
 
-    if diskutil info "$externalDiskUUID" &> /dev/null; then
+    if diskutil info "$externalDiskUUID" &>/dev/null; then
         currentDriveName=$(diskutil info "$externalDiskUUID" \
             | grep "Volume Name" \
             | cut -d':' -f2 \
@@ -204,7 +204,7 @@ tell application "Finder" to tell window of desktop to \
 tell its icon view options to \
 set arrangement to arranged by kind
 EOF
-  osascript -e "$applescript"
+  osascript -e "$applescript" &>/dev/null
   killall "Finder"
 }
 
@@ -235,7 +235,7 @@ EOF
 
     message='"cleanup is running... '
     message+='do not use computer until this message goes away"'
-    osascript -e "display alert $message buttons \"\"" &> /dev/null &
+    osascript -e "display alert $message buttons \"\"" &>/dev/null &
     guiAlertWindow=$!
 fi
 
@@ -263,7 +263,7 @@ if [[ $guiAlertWindow ]]; then
     disown $guiAlertWindow # else kill produces output
     kill $guiAlertWindow
     osascript -e 'display alert "Cleanup finished." giving up after 5' \
-        &> /dev/null
+        &>/dev/null
 fi
 
 exit 0
