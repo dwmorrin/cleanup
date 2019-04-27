@@ -39,24 +39,8 @@ sortDesktop=false
 verbose=false
 depth=(-maxdepth 1 -mindepth 1) # trying to keep these options portable
 
-while getopts bc:d:eD:glm:n:ost:uv option; do
-    case "$option"
-    in
-        b) set -x;;
-        c) cleanupParent="$OPTARG";;
-        d) externalDiskUUID="$OPTARG";;
-        D) correctDriveName="$OPTARG";;
-        e) emptyTrash=true;;
-        g) guiMode=true;;
-        l) emptyDownloads=true;;
-        m) mailto="$OPTARG";;
-        n) cleanupDirName="$OPTARG";;
-        o) onlyOnce=true;;
-        s) sortDesktop=true;;
-        t) daysUntilDelete="$OPTARG";;
-        u) nouchg=false;;
-        v) verbose=true;;
-       \?) cat <<EOF
+usage() {
+    cat <<EOF
 Usage: $progname [-eglosuv][-c path][-n name][-t days][-m email]
                  [-d UUID][-D name] dir...
   -c Path to the cleanup directory (defaults to current users Desktop)
@@ -79,10 +63,36 @@ If the path specificed by -c points to an external drive:
   -d External hard drive UUID
   -D Name of the external hard drive
 EOF
-            exit 1;;
+}
+
+while getopts bc:d:eD:glm:n:ost:uv option; do
+    case "$option"
+    in
+        b) set -x;;
+        c) cleanupParent="$OPTARG";;
+        d) externalDiskUUID="$OPTARG";;
+        D) correctDriveName="$OPTARG";;
+        e) emptyTrash=true;;
+        g) guiMode=true;;
+        l) emptyDownloads=true;;
+        m) mailto="$OPTARG";;
+        n) cleanupDirName="$OPTARG";;
+        o) onlyOnce=true;;
+        s) sortDesktop=true;;
+        t) daysUntilDelete="$OPTARG";;
+        u) nouchg=false;;
+        v) verbose=true;;
+       \?) usage; exit 1;;
     esac
 done
 shift $((OPTIND - 1))
+
+if [[ $# -eq 0 ]]; then
+    read -r -p "$progname: no directory specified. Continue? [y/n] "
+    if ! [[ $REPLY =~ [Yy] ]]; then
+        usage; exit 1
+    fi
+fi
 
 # today's desktop cleanup directory
 dailyDir="$cleanupParent/$cleanupDirName/$today"
