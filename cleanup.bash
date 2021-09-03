@@ -208,13 +208,9 @@ deleteContentsOf() {
 }
 
 sortDesktopByKind() {
-  local applescript
-  read -r -d '' applescript <<EOF
-tell application "Finder" to tell window of desktop to \
-tell its icon view options to \
-set arrangement to arranged by kind
-EOF
-  osascript -e "$applescript" &>/dev/null
+  osascript -e \
+  'tell application "Finder" to tell window of desktop to clean up by kind' \
+  &>/dev/null
   killall "Finder"
 }
 
